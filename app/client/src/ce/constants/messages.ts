@@ -20,8 +20,14 @@ export const ERROR_EMPTY_APPLICATION_NAME = () =>
   `Application name can't be empty`;
 export const API_PATH_START_WITH_SLASH_ERROR = () => `Path cannot start with /`;
 export const FIELD_REQUIRED_ERROR = () => `This field is required`;
-export const INPUT_DEFAULT_TEXT_MAX_CHAR_ERROR = () =>
-  `Default Text length must be less than Max Chars allowed`;
+export const INPUT_DEFAULT_TEXT_MAX_CHAR_ERROR = (max: number) =>
+  `Default text length must be less than ${max} characters`;
+export const INPUT_TEXT_MAX_CHAR_ERROR = (max: number) =>
+  `Input text length must be less than ${max} characters`;
+export const INPUT_DEFAULT_TEXT_MAX_NUM_ERROR = () =>
+  `Default Text value must be less than Max number allowed`;
+export const INPUT_DEFAULT_TEXT_MIN_NUM_ERROR = () =>
+  `Default Text value must be greater than Min number allowed`;
 export const VALID_FUNCTION_NAME_ERROR = () =>
   `Must be a valid variable name (camelCase)`;
 export const UNIQUE_NAME_ERROR = () => `Name must be unique`;
@@ -764,6 +770,8 @@ export const DISCARD_CHANGES = () => "Discard changes";
 // GIT DEPLOY begin
 export const DEPLOY = () => "Deploy";
 export const DEPLOY_YOUR_APPLICATION = () => "Deploy your application";
+export const CHANGES_SINCE_LAST_DEPLOYMENT = () =>
+  "Changes since last deployment";
 export const CHANGES_ONLY_USER = () => "Changes since last commit";
 export const CHANGES_MADE_SINCE_LAST_COMMIT = () =>
   "Changes made since last commit";
@@ -772,6 +780,15 @@ export const CHANGES_ONLY_MIGRATION = () =>
 export const CHANGES_USER_AND_MIGRATION = () =>
   "Superapps update and user changes since last commit";
 // GIT DEPLOY end
+
+// GIT CHANGE LIST begin
+export const CHANGES_FROM_APPSMITH = () =>
+  "Some changes are platform upgrades from Appsmith.";
+export const TRY_TO_PULL = () =>
+  "We will try to pull before pushing your changes.";
+export const NOT_PUSHED_YET = () =>
+  "These are the commits that haven't been pushed to remote yet.";
+// GIT CHANGE LIST end
 
 // GIT DELETE BRANCH begin
 export const DELETE = () => "Delete";
@@ -1043,11 +1060,15 @@ export const QUERY_CONFIRMATION_MODAL_MESSAGE = () =>
 export const ENTITY_EXPLORER_TITLE = () => "NAVIGATION";
 export const MULTI_SELECT_PROPERTY_PANE_MESSAGE = () =>
   `Select a widget to see it's properties`;
-export const WIDGET_DEPRECATION_WARNING = (widgetName: string) =>
-  `A new version of the ${widgetName}widget is available. Upgrade to enjoy an enhanced experience.`;
-export const WIDGET_DEPRECATION_WARNING_HEADER = () => "Stay up-to-date";
+export const WIDGET_DEPRECATION_MESSAGE = (widgetName: string) =>
+  `The ${widgetName}widget you are currently using is now deprecated.`;
+export const DEPRECATION_WIDGET_REPLACEMENT_MESSAGE = (
+  replacingWidgetName: string,
+) =>
+  ` You can drag a new ${replacingWidgetName} widget and configure it in place of the deprecated widget.`;
 export const LOCK_ENTITY_EXPLORER_MESSAGE = () => `Lock sidebar open`;
 export const CLOSE_ENTITY_EXPLORER_MESSAGE = () => `Close sidebar`;
+export const JS_TOGGLE_DISABLED_MESSAGE = "Clear the field to toggle back";
 
 // API Pane
 export const API_PANE_NO_BODY = () => "This request does not have a body";

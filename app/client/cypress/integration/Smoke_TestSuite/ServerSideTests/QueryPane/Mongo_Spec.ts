@@ -44,7 +44,6 @@ describe("Validate Mongo Query Pane Validations", () => {
     });
 
     agHelper.ValidateNetworkStatus("@getDatasourceStructure"); //Making sure table dropdown is populated
-    agHelper.WaitUntilToastDisappear("datasource updated successfully");
     agHelper.GetNClick(dataSources._selectTableDropdown);
     agHelper.GetNClickByContains(dataSources._dropdownOption, "friends");
 
@@ -55,7 +54,7 @@ describe("Validate Mongo Query Pane Validations", () => {
       11,
     );
 
-    agHelper.NavigateBacktoEditor();
+    deployMode.NavigateBacktoEditor();
     cy.get("@dsName").then(($dsName) => {
       dsName = $dsName;
     });
@@ -315,8 +314,8 @@ describe("Validate Mongo Query Pane Validations", () => {
     });
     agHelper.ActionContextMenuWithInPane("Delete");
 
-    ee.expandCollapseEntity("DATASOURCES");
-    ee.expandCollapseEntity(dsName);
+    ee.ExpandCollapseEntity("DATASOURCES");
+    ee.ExpandCollapseEntity(dsName);
     ee.ActionContextMenuByEntityName(dsName, "Refresh");
     agHelper.AssertElementVisible(ee._entityNameInExplorer("AuthorNAwards"));
   });
@@ -626,10 +625,10 @@ describe("Validate Mongo Query Pane Validations", () => {
   });
 
   it("16. Validate Deletion of the Newly Created Page - AuthorNAwards", () => {
-    agHelper.NavigateBacktoEditor();
+    deployMode.NavigateBacktoEditor();
     table.WaitUntilTableLoad();
     //Delete the test data
-    ee.expandCollapseEntity("PAGES");
+    ee.ExpandCollapseEntity("PAGES");
     ee.ActionContextMenuByEntityName(
       "AuthorNAwards",
       "Delete",
@@ -643,16 +642,17 @@ describe("Validate Mongo Query Pane Validations", () => {
     dataSources.NavigateFromActiveDS(dsName, true);
 
     dataSources.ValidateNSelectDropdown("Commands", "Find Document(s)", "Raw");
+    agHelper.RenameWithInPane("DropAuthorNAwards"); //Due to template appearing after renaming
     agHelper.GetNClick(dataSources._templateMenu);
 
-    agHelper.RenameWithInPane("DropAuthorNAwards");
-    agHelper.EnterValue(dropCollection);
+    dataSources.EnterQuery(dropCollection);
     cy.get(".CodeMirror textarea").focus();
     //agHelper.VerifyEvaluatedValue(tableCreateQuery);
 
     dataSources.RunQuery();
     agHelper.ActionContextMenuWithInPane("Delete");
-    ee.expandCollapseEntity(dsName);
+    ee.ExpandCollapseEntity("DATASOURCES");
+    ee.ExpandCollapseEntity(dsName);
     ee.ActionContextMenuByEntityName(dsName, "Refresh");
     agHelper.AssertElementAbsence(ee._entityNameInExplorer("AuthorNAwards"));
   });
@@ -663,8 +663,8 @@ describe("Validate Mongo Query Pane Validations", () => {
     dataSources.ValidateNSelectDropdown("Commands", "Find Document(s)", "Raw");
     agHelper.GetNClick(dataSources._templateMenu);
     agHelper.RenameWithInPane("DropAuthorNAwards");
-    agHelper.EnterValue(dropCollection);
-    cy.get(".CodeMirror textarea").focus();
+    dataSources.EnterQuery(dropCollection);
+    cy.get(locator._codeMirrorTextArea).focus();
     //agHelper.VerifyEvaluatedValue(tableCreateQuery);
 
     dataSources.RunQuery(false);
@@ -674,13 +674,107 @@ describe("Validate Mongo Query Pane Validations", () => {
     agHelper.ActionContextMenuWithInPane("Delete");
   });
 
-  it("19. Verify Deletion of the datasource", () => {
+  it("19. Verfiy application can parse dates before and on or after Jan 1, 1970", () => {
+    let birthNDeathArray = `[{
+      "name": {
+        "first": "John",
+        "last": "Backus"
+      },
+      "birth": ISODate("0001-01-01T00:00:00.000+00:00"),
+      "death": ISODate("2007-03-17T04:00:00Z"),
+      "issue": 13285
+    },
+    {
+      "name": {
+        "first": "John",
+        "last": "McCarthy"
+      },
+      "birth": ISODate("1927-09-04T04:00:00Z"),
+      "death": ISODate("2011-12-24T05:00:00Z"),
+      "issue": 13285
+    },
+    {
+      "name": {
+        "first": "Grace",
+        "last": "Hopper"
+      },
+      "title": "Rear Admiral",
+      "birth": ISODate("1906-12-09T05:00:00Z"),
+      "death": ISODate("1992-01-01T05:00:00Z"),
+      "issue": 13285
+    },
+    {
+      "name": {
+        "first": "Kristen",
+        "last": "Nygaard"
+      },
+      "birth": ISODate("1926-08-27T04:00:00Z"),
+      "death": ISODate("2002-08-10T04:00:00Z"),
+      "issue": 13285
+    }
+  ]`;
+
+    dataSources.NavigateFromActiveDS(dsName, true);
+
+    dataSources.ValidateNSelectDropdown(
+      "Commands",
+      "Find Document(s)",
+      "Insert Document(s)",
+    );
+
+    agHelper.RenameWithInPane("InsertBirthNDeath");
+    agHelper.EnterValue("BirthNDeath", {
+      propFieldName: "",
+      directInput: false,
+      inputFieldName: "Collection",
+    });
+
+    agHelper.EnterValue(birthNDeathArray, {
+      propFieldName: "",
+      directInput: false,
+      inputFieldName: "Documents",
+    });
+
+    agHelper.AssertAutoSave();
+    agHelper.Sleep(2000); //for documents value to settle!
+    dataSources.RunQuery();
+    agHelper.Sleep(4000); //for capturing right response!
+    cy.get("@postExecute").then((resObj: any) => {
+      expect(parseInt(JSON.stringify(resObj.response.body.data.body.n))).to.eq(
+        4,
+      );
+    });
+    agHelper.ActionContextMenuWithInPane("Delete");
+
+    //Execute a find query on this collection to see if dates are fetched properly
+    ee.ExpandCollapseEntity("DATASOURCES");
+    ee.ExpandCollapseEntity(dsName);
+    ee.ActionContextMenuByEntityName(dsName, "Refresh");
+    agHelper.AssertElementVisible(ee._entityNameInExplorer("BirthNDeath"));
+
+    ee.ActionTemplateMenuByEntityName("BirthNDeath", "Find");
+    dataSources.ValidateNSelectDropdown("Commands", "Find Document(s)");
+    RunQueryNVerify(4);
+
+    //Drop the collection `BirthNDeath`
+    let dropCollection = `{ "drop": "BirthNDeath" }`;
+
+    dataSources.NavigateFromActiveDS(dsName, true);
+    dataSources.ValidateNSelectDropdown("Commands", "Find Document(s)", "Raw");
+    agHelper.GetNClick(dataSources._templateMenu);
+    agHelper.RenameWithInPane("DropBirthNDeath");
+    dataSources.EnterQuery(dropCollection);
+    cy.get(".CodeMirror textarea").focus();
+    dataSources.RunQuery();
+  });
+
+  it("20. Verify Deletion of the datasource", () => {
     //Delete the test data
     // ee.expandCollapseEntity("PAGES")
     // ee.ActionContextMenuByEntityName("Page1", "Delete", "Are you sure?"); //Cant be deleted since this is the Home page!
     // agHelper.ValidateNetworkStatus("@deletePage", 200);
     deployMode.DeployApp();
-    agHelper.NavigateBacktoEditor();
+    deployMode.NavigateBacktoEditor();
     dataSources.DeleteDatasouceFromWinthinDS(dsName, 409); //Friends pages are still using this ds
   });
 
